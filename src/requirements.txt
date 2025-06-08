@@ -1,0 +1,5 @@
+boto3
+polars
+requests
+python-dotenv
+loguru
