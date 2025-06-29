@@ -8,6 +8,7 @@ from schema.column_mapping import (
     weather_columns_hourly_units,
 )
 
+from configs.env_vars import S3_BUCKET
 
 def lambda_handler(event, context):
     for record in event.get("Records"):
@@ -18,13 +19,15 @@ def lambda_handler(event, context):
             path = body_record["s3"]["object"]["key"]
 
             # Extract
+            logger.info(f"Processing file: s3://{bucket}/{path}")
             json_file = extract.read_s3(bucket=bucket, key=path)
             df_weather = extract.read_pl_json(file=json_file)
 
             # Transform
+            logger.info("Transforming dataframes")
             df_weather_hourly = transform.pl_unnest_explode(
                 df=df_weather,
-                columns=["latitude", "longitude", "hourly", "extraction_datetime"],
+                columns=["latitude", "longitude", "state", "hourly", "extraction_datetime"],
                 unnest_column="hourly",
                 explode_columns=["time", "temperature_2m"],
             )
@@ -33,6 +36,7 @@ def lambda_handler(event, context):
                 columns=[
                     "latitude",
                     "longitude",
+                    "state",
                     "hourly_units",
                     "extraction_datetime",
                 ],
@@ -51,7 +55,34 @@ def lambda_handler(event, context):
                 df_weather_hourly_units, weather_columns_hourly_units
             )
 
+            df_weather_hourly = transform.pl_create_partition(
+                df=df_weather_hourly, time_col="time"
+            )
+
             # Load
+            logger.info("Loading dataframes to S3")
+            df_weather = df_weather.to_pandas()
+            df_weather_hourly = df_weather_hourly.to_pandas()
+            df_weather_hourly_units = df_weather_hourly_units.to_pandas()
+
+            load.write_s3(
+                df=df_weather,
+                bucket=f"{S3_BUCKET}-processed",
+                key = "df_weather",
+                partition_cols=["state"]
+            )
+            load.write_s3(
+                df=df_weather_hourly,
+                bucket=f"{S3_BUCKET}-processed",
+                key = "df_weather_hourly",
+                partition_cols=["state", "year", "month", "day", "hour"]
+            )
+            load.write_s3(
+                df=df_weather_hourly_units,
+                bucket=f"{S3_BUCKET}-processed",
+                key = "df_weather_hourly_units",
+                partition_cols=["state"]
+            )
 
 
 if __name__ == "__main__":

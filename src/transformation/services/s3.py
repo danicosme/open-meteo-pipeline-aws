@@ -1,6 +1,7 @@
 import json
 import os
 
+import awswrangler as wr
 import boto3
 from loguru import logger
 
@@ -12,17 +13,6 @@ class S3Service:
         self.bucket = bucket
         self.key = key
 
-    def put_object(self, data):
-        try:
-            return s3.put_object(
-                Body=json.dumps(data),
-                Bucket=f"{self.bucket}-processed",
-                Key=self.key,
-            )
-        except Exception as e:
-            logger.error(f"An error occurred while putting object: {e}")
-            raise e
-
     def get_object(self):
         try:
             response = s3.get_object(Bucket=self.bucket, Key=self.key)
@@ -31,9 +21,15 @@ class S3Service:
             logger.error(f"An error occurred while getting object: {e}")
             raise e
 
-    def upload_fileobj(self, data, key):
+    def write_parquet(self, df, partition_cols):
         try:
-            s3.upload_fileobj(data, self.bucket, key)
+            wr.s3.to_parquet(
+                df=df,
+                path=f"s3://{self.bucket}/{self.key}",
+                dataset=True,
+                mode="overwrite_partitions",
+                partition_cols=partition_cols,
+            )
         except Exception as e:
-            logger.error(f"An error occurred while uploading file: {e}")
+            logger.error(f"An error occurred while writing parquet: {e}")
             raise e
