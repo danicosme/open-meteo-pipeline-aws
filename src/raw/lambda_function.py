@@ -8,7 +8,7 @@ from services.api import ApiService
 from services.s3 import S3Service
 
 
-def process_state(
+def run_job(
     state: str,
     values: dict,
     api_service: ApiService,
@@ -47,7 +47,7 @@ def lambda_handler(event, context):
     api_service = ApiService(API_URL)
     s3_service = S3Service(S3_BUCKET)
     for state, values in states_coordinates.items():
-        process_state(state, values, api_service, s3_service, extraction_datetime)
+        run_job(state, values, api_service, s3_service, extraction_datetime)
 
 
 if __name__ == "__main__":
