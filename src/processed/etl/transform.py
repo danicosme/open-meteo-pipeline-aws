@@ -26,6 +26,11 @@ def pl_drop_columns(df: pl.DataFrame, columns: list) -> pl.DataFrame:
     df = df.drop(columns)
     return df
 
+def pl_with_columns(df: pl.DataFrame, columns: dict) -> pl.DataFrame:
+    for column, value in columns.items():
+        df = df.with_columns(pl.lit(value).alias(column))
+    return df
+
 def pl_create_partition(df: pl.DataFrame, time_col) -> pl.DataFrame:
     df = df.with_columns(
         pl.col(time_col).dt.year().alias("year"),

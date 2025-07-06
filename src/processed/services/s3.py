@@ -21,7 +21,7 @@ class S3Service:
             logger.error(f"An error occurred while getting object: {e}")
             raise e
 
-    def write_parquet(self, df, partition_cols):
+    def write_parquet_partitioned(self, df, partition_cols):
         try:
             wr.s3.to_parquet(
                 df=df,
@@ -29,6 +29,18 @@ class S3Service:
                 dataset=True,
                 mode="overwrite_partitions",
                 partition_cols=partition_cols,
+            )
+        except Exception as e:
+            logger.error(f"An error occurred while writing parquet: {e}")
+            raise e
+
+    def write_parquet(self, df):
+        try:
+            wr.s3.to_parquet(
+                df=df,
+                path=f"s3://{self.bucket}/{self.key}",
+                dataset=True,
+                mode="overwrite",
             )
         except Exception as e:
             logger.error(f"An error occurred while writing parquet: {e}")
