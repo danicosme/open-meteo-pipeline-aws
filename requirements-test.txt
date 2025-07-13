@@ -1,1 +1,1 @@
-pytest-cov
+pytest-cov==6.2.1
