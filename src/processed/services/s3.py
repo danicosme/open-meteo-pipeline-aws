@@ -19,7 +19,6 @@ class S3Service:
             return response["Body"].read()
         except Exception as e:
             logger.error(f"An error occurred while getting object: {e}")
-            raise e
 
     def write_parquet_partitioned(self, df, partition_cols):
         try:
@@ -32,7 +31,6 @@ class S3Service:
             )
         except Exception as e:
             logger.error(f"An error occurred while writing parquet: {e}")
-            raise e
 
     def write_parquet(self, df):
         try:
@@ -44,4 +42,3 @@ class S3Service:
             )
         except Exception as e:
             logger.error(f"An error occurred while writing parquet: {e}")
-            raise e

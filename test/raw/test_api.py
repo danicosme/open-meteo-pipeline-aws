@@ -1,6 +1,5 @@
 from unittest.mock import patch
 from src.raw.services.api import ApiService
-import json
 
 expected_response = {
     "latitude": -23.5505,
