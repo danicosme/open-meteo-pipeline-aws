@@ -1,5 +1,5 @@
 from unittest.mock import patch
-from src.raw.services.s3 import S3Service
+from src.ingestion.services.s3 import S3Service
 import json
 
 bucket = "test-bucket"
