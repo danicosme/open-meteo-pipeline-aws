@@ -9,14 +9,14 @@ def run_job(body_record):
         bucket = body_record["s3"]["bucket"]["name"]
         path = body_record["s3"]["object"]["key"]
     except KeyError as e:
-        logger.error(f"Chave ausente no registro S3: {e}. Registro: {body_record}")
+        logger.error(f"Key error in body_record: {e}. Record: {body_record}")
         return
     
     logger.info(f"Processing file: s3://{bucket}/{path}")
     try:
         df = extract.pl_read_parquet_from_s3(bucket, path)
     except Exception as e:
-        logger.error(f"Erro ao extrair arquivo {path} do bucket {bucket}: {e}")
+        logger.error(f"Error extracting file {path} from bucket {bucket}: {e}")
         return
 
     # Transform
@@ -32,10 +32,15 @@ def run_job(body_record):
                 )
                 descriptions.append(desc)
             except Exception as e:
-                raise(f"Erro ao gerar descrição: {e}")
+                raise(f"Error generating description for row {row}: {e}")
+
+        # Adiciona as descrições geradas ao DataFrame
         df = transform.pl_with_columns(df, descriptions, columna_name="weather_description")
+
+        # Create partition columns
+        df = transform.pl_create_partition(df, path)
     except Exception as e:
-        logger.error(f"Erro ao transformar dados: {e}")
+        logger.error(f"Error during transformation: {e}")
         return
 
     # Load
@@ -46,8 +51,8 @@ def run_job(body_record):
                 df=df,
                 bucket=f"{S3_BUCKET}-enriched",
                 key="df_weather_hourly",
-                partition_cols=["state","year", "month", "day", "hour"],
+                partition_cols=["state", "year", "month", "day", "hour"],
             )
     except Exception as e:
-        logger.error(f"Erro ao carregar dados no S3: {e}")
+        logger.error(f"Error loading data to S3: {e}")
         return

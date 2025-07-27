@@ -1,5 +1,5 @@
 import polars as pl
-from src.processed.services.s3 import S3Service
+from services.s3 import S3Service
 
 
 def read_s3(bucket: str, key: str):

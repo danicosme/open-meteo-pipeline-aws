@@ -103,7 +103,7 @@ def run_job(body_record):
             df=df_weather_hourly,
             bucket=f"{S3_BUCKET}-processed",
             key="df_weather_hourly",
-            partition_cols=["state", "year", "month", "day", "hour"],
+            partition_cols=["year", "month", "day", "hour"],
         )
         load.write_s3(
             df=df_weather_hourly_units,
