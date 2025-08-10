@@ -1,11 +1,8 @@
 from etl import extract, load, transform
 from loguru import logger
-from schema.column_mapping import (
-    weather_columns,
-    weather_columns_hourly,
-    weather_columns_hourly_units,
-)
-from configs.env_vars import S3_BUCKET
+from schema.column_mapping import ColumnMapping
+
+from src.common.configs.env_vars import S3_BUCKET
 
 
 def run_job(body_record):
@@ -33,7 +30,13 @@ def run_job(body_record):
             df=df_weather,
             columns=["latitude", "longitude", "hourly", "extraction_datetime"],
             unnest_column="hourly",
-            explode_columns=["time", "temperature_2m", "relative_humidity_2m", "windspeed_10m", "precipitation"],
+            explode_columns=[
+                "time",
+                "temperature_2m",
+                "relative_humidity_2m",
+                "windspeed_10m",
+                "precipitation",
+            ],
         )
         df_weather_hourly_units = transform.pl_unnest(
             df=df_weather,
@@ -45,9 +48,7 @@ def run_job(body_record):
         )
 
         # Drop unnecessary columns
-        df_weather = transform.pl_drop_columns(
-            df_weather, ["hourly", "hourly_units"]
-        )
+        df_weather = transform.pl_drop_columns(df_weather, ["hourly", "hourly_units"])
 
         # Enrich dataframes with state and city information
         path_parts = path.split("/")[-1].replace(".json", "")
@@ -71,12 +72,12 @@ def run_job(body_record):
         )
 
         # Cast columns
-        df_weather = transform.pl_cast(df_weather, weather_columns)
+        df_weather = transform.pl_cast(df_weather, ColumnMapping.get_weather_columns())
         df_weather_hourly = transform.pl_cast(
-            df_weather_hourly, weather_columns_hourly
+            df_weather_hourly, ColumnMapping.get_weather_columns_hourly()
         )
         df_weather_hourly_units = transform.pl_cast(
-            df_weather_hourly_units, weather_columns_hourly_units
+            df_weather_hourly_units, ColumnMapping.get_weather_columns_hourly_units()
         )
 
         # Create partitions
@@ -108,7 +109,7 @@ def run_job(body_record):
         load.write_s3(
             df=df_weather_hourly_units,
             bucket=f"{S3_BUCKET}-processed",
-            key="df_weather_hourly_units"
+            key="df_weather_hourly_units",
         )
         logger.info(f"Arquivo {path} processado e salvo com sucesso.")
     except Exception as e:

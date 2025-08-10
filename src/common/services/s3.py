@@ -1,8 +1,8 @@
+import json
 import os
 
-import boto3
 import awswrangler as wr
-
+import boto3
 from loguru import logger
 
 s3 = boto3.client("s3", region_name=os.getenv("REGION_NAME"))
@@ -12,6 +12,12 @@ class S3Service:
     def __init__(self, bucket, key):
         self.bucket = bucket
         self.key = key
+
+    def put_object(self, data):
+        try:
+            s3.put_object(Body=json.dumps(data), Bucket=f"{self.bucket}", Key=self.key)
+        except Exception as e:
+            logger.error(f"An error occurred: {e}")
 
     def get_object(self):
         try:
@@ -28,6 +34,17 @@ class S3Service:
                 dataset=True,
                 mode="overwrite_partitions",
                 partition_cols=partition_cols,
+            )
+        except Exception as e:
+            logger.error(f"An error occurred while writing parquet: {e}")
+
+    def write_parquet(self, df):
+        try:
+            wr.s3.to_parquet(
+                df=df,
+                path=f"s3://{self.bucket}/{self.key}",
+                dataset=True,
+                mode="overwrite",
             )
         except Exception as e:
             logger.error(f"An error occurred while writing parquet: {e}")

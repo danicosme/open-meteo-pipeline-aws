@@ -1,6 +1,8 @@
 import json
+
+from job import run_job
 from loguru import logger
-from run_job import run_job
+
 
 def lambda_handler(event, context):
     records = event.get("Records", [])
@@ -15,6 +17,7 @@ def lambda_handler(event, context):
             continue
         for body_record in body.get("Records", []):
             run_job(body_record)
+
 
 if __name__ == "__main__":
     event = {

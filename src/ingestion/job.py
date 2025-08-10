@@ -1,17 +1,16 @@
+import unicodedata
 from datetime import datetime
 
-import unicodedata
-
 from loguru import logger
-from services.api import ApiService
-from services.s3 import S3Service
+
+from src.common.configs.env_vars import API_URL, S3_BUCKET
+from src.common.services.api import ApiService
+from src.common.services.s3 import S3Service
 
 
 def run_job(
     state: str,
     values: dict,
-    api_service: ApiService,
-    s3_service: S3Service,
     extraction_datetime: datetime,
 ):
     logger.info(f"Processing: {state} - {values['city']}")
@@ -24,20 +23,17 @@ def run_job(
     }
 
     try:
-        response = api_service.get_response(params)
+        response = ApiService(API_URL).get(params)
         if not response:
             logger.warning(f"No response for {state} - {values['city']}")
-        
+
         response["extraction_datetime"] = extraction_datetime
 
         city = unicodedata.normalize("NFKD", values["city"].replace(" ", "_").lower())
-        city = ''.join(
-            c for c in city
-            if unicodedata.category(c) != 'Mn'
-        )
+        city = "".join(c for c in city if unicodedata.category(c) != "Mn")
 
         file_path = f"{extraction_datetime.replace(':', '-')}/{state}_{city}.json"
-        s3_service.put_object(data=response, key=file_path)
+        S3Service(f"{S3_BUCKET}-raw", file_path).put_object(data=response)
         logger.info(f"Uploaded data for {state} to S3: {file_path}")
     except Exception as e:
         logger.error(f"Failed processing {state}: {e}")

@@ -1,8 +1,7 @@
 import json
 
+from job import run_job
 from loguru import logger
-
-from run_job import run_job
 
 
 def lambda_handler(event, context):
@@ -39,7 +38,7 @@ if __name__ == "__main__":
                 "eventSourceARN": "arn:aws:sqs:us-east-1:123456789012:MyQueue",
                 "awsRegion": "us-east-1",
             },
-                        {
+            {
                 "messageId": "19dd0b57-b21e-4ac1-bd88-01bbb068cb78",
                 "receiptHandle": "MessageReceiptHandle",
                 "body": '{"Records":[{"eventVersion":"2.1","eventSource":"aws:s3","awsRegion":"us-east-1","eventTime":"2025-06-16T22:00:00.000Z","eventName":"ObjectCreated:Put","s3":{"s3SchemaVersion":"1.0","configurationId":"my-s3-to-sqs-config","bucket":{"name":"open-meteo-pipeline-aws-raw","arn":"arn:aws:s3:::open-meteo-pipeline-aws-raw"},"object":{"key":"2025-07-06T12-06-18/SC_florianopolis.json","size":123456}}}]}',
@@ -54,7 +53,7 @@ if __name__ == "__main__":
                 "eventSource": "aws:sqs",
                 "eventSourceARN": "arn:aws:sqs:us-east-1:123456789012:MyQueue",
                 "awsRegion": "us-east-1",
-            }
+            },
         ]
     }
     lambda_handler(event, None)
