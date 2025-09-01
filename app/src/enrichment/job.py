@@ -52,7 +52,7 @@ def run_job(body_record):
         df = df.to_pandas()
         load.write_s3(
             df=df,
-            bucket=f"{S3_BUCKET}-enriched",
+            bucket=S3_BUCKET,
             key="df_weather_hourly",
             partition_cols=["state", "year", "month", "day", "hour"],
         )

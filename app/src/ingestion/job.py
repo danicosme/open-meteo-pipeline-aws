@@ -33,7 +33,7 @@ def run_job(
         city = "".join(c for c in city if unicodedata.category(c) != "Mn")
 
         file_path = f"{extraction_datetime.replace(':', '-')}/{state}_{city}.json"
-        S3Service(f"{S3_BUCKET}-raw", file_path).put_object(data=response)
+        S3Service(S3_BUCKET, file_path).put_object(data=response)
         logger.info(f"Uploaded data for {state} to S3: {file_path}")
     except Exception as e:
         logger.error(f"Failed processing {state}: {e}")

@@ -399,6 +399,13 @@ resource "aws_iam_role_policy" "lambda_policy" {
           "logs:PutLogEvents"
         ]
         Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter"
+        ]
+        Resource = data.aws_ssm_parameter.openrouter_api_key.arn
       }
     ]
   })
@@ -406,61 +413,81 @@ resource "aws_iam_role_policy" "lambda_policy" {
 
 # Lambda functions
 resource "aws_lambda_function" "ingestion" {
-  filename      = "./app/src/ingestion/ingestion.zip"
+  filename      = "../dist/ingestion.zip"
   function_name = "${var.project}-ingestion"
   role          = aws_iam_role.lambda_role.arn
   handler       = "lambda_function.lambda_handler"
   runtime       = var.lambda_runtime
   timeout       = var.lambda_timeout
   memory_size   = var.lambda_memory
+  layers = [
+    aws_lambda_layer_version.loguru.arn,
+    aws_lambda_layer_version.python_dotenv.arn,
+  ]
 
   environment {
     variables = {
-      RAW_BUCKET          = aws_s3_bucket.raw.id
-      PROCESSED_QUEUE_URL = aws_sqs_queue.processed.url
+      API_URL   = var.api_url
+      S3_BUCKET = aws_s3_bucket.raw.id
     }
   }
 
   tags = local.common_tags
+
+  depends_on = [aws_lambda_layer_version.loguru, aws_lambda_layer_version.python_dotenv, aws_lambda_layer_version.polars]
 }
 
 resource "aws_lambda_function" "processing" {
-  filename      = "./app/src/processing/processing.zip"
+  filename      = "../dist/processing.zip"
   function_name = "${var.project}-processing"
   role          = aws_iam_role.lambda_role.arn
   handler       = "lambda_function.lambda_handler"
   runtime       = var.lambda_runtime
   timeout       = var.lambda_timeout
   memory_size   = var.lambda_memory
+  layers = [
+    aws_lambda_layer_version.loguru.arn,
+    aws_lambda_layer_version.python_dotenv.arn,
+    aws_lambda_layer_version.polars.arn
+  ]
 
   environment {
     variables = {
-      RAW_BUCKET         = aws_s3_bucket.raw.id
-      PROCESSED_BUCKET   = aws_s3_bucket.processed.id
-      ENRICHED_QUEUE_URL = aws_sqs_queue.enriched.url
+      S3_BUCKET = aws_s3_bucket.processed.id
     }
   }
 
   tags = local.common_tags
+
+  depends_on = [aws_lambda_layer_version.loguru, aws_lambda_layer_version.python_dotenv, aws_lambda_layer_version.polars]
 }
 
 resource "aws_lambda_function" "enrichment" {
-  filename      = "./app/src/enrichment/enrichment.zip"
+  filename      = "../dist/enrichment.zip"
   function_name = "${var.project}-enrichment"
   role          = aws_iam_role.lambda_role.arn
   handler       = "lambda_function.lambda_handler"
   runtime       = var.lambda_runtime
   timeout       = var.lambda_timeout
   memory_size   = var.lambda_memory
+  layers = [
+    aws_lambda_layer_version.loguru.arn,
+    aws_lambda_layer_version.python_dotenv.arn,
+    aws_lambda_layer_version.polars.arn
+  ]
 
   environment {
     variables = {
-      PROCESSED_BUCKET = aws_s3_bucket.processed.id
-      ENRICHED_BUCKET  = aws_s3_bucket.enriched.id
+      S3_BUCKET          = aws_s3_bucket.enriched.id
+      API_ROUTER_URL     = var.api_router_url
+      MODEL              = var.model
+      OPENROUTER_API_KEY = data.aws_ssm_parameter.openrouter_api_key.value
     }
   }
 
   tags = local.common_tags
+
+  depends_on = [aws_lambda_layer_version.loguru, aws_lambda_layer_version.python_dotenv, aws_lambda_layer_version.polars]
 }
 
 # Lambda SQS triggers

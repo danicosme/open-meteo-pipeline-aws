@@ -45,3 +45,28 @@ variable "sqs_message_retention_days" {
   type        = number
   default     = 7
 }
+
+variable "api_url" {
+  description = "API URL for the application"
+  type        = string
+  default     = "https://api.open-meteo.com/v1/forecast"
+}
+
+variable "api_router_url" {
+  description = "API Router URL for the text model"
+  type        = string
+  default     = "https://openrouter.ai/api/v1/chat/completions"
+  
+}
+
+variable "model" {
+  description = "Model for the text generation"
+  type        = string
+  default     = "deepseek/deepseek-r1-0528:free"
+}
+
+variable "openrouter_api_key" {
+  description = "API key for OpenRouter"
+  type        = string
+  default     = "/open-meteo-pipeline-aws/openrouter_api_key"
+}

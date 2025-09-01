@@ -1,0 +1,36 @@
+# make -f Makefile_layers all
+LAYERS_DIR = layers
+PYTHON_VERSION = python3.12
+ARCHITECTURE = linux/x86_64
+
+LOGURU_VERSION = 0.7.3
+PYTHON_DOTENV_VERSION = 1.1.0
+POLARS_VERSION = 1.31.0
+
+.PHONY: all clean create_layers_dir loguru_layer dotenv_layer polars_layer
+
+all: clean create_layers_dir loguru_layer dotenv_layer polars_layer
+
+clean:
+	rm -rf $(LAYERS_DIR)
+
+create_layers_dir:
+	mkdir -p $(LAYERS_DIR)
+
+loguru_layer: create_layers_dir
+	mkdir -p $(LAYERS_DIR)/loguru/$(PYTHON_VERSION)/lib/$(PYTHON_VERSION)/site-packages
+	pip install loguru==$(LOGURU_VERSION) -t $(LAYERS_DIR)/loguru/$(PYTHON_VERSION)/lib/$(PYTHON_VERSION)/site-packages
+	cd $(LAYERS_DIR)/loguru && zip -r ../loguru.zip .
+	rm -rf $(LAYERS_DIR)/loguru
+
+dotenv_layer: create_layers_dir
+	mkdir -p $(LAYERS_DIR)/python-dotenv/$(PYTHON_VERSION)/lib/$(PYTHON_VERSION)/site-packages
+	pip install python-dotenv==$(PYTHON_DOTENV_VERSION) -t $(LAYERS_DIR)/python-dotenv/$(PYTHON_VERSION)/lib/$(PYTHON_VERSION)/site-packages
+	cd $(LAYERS_DIR)/python-dotenv && zip -r ../python-dotenv.zip .
+	rm -rf $(LAYERS_DIR)/python-dotenv
+
+polars_layer: create_layers_dir
+	mkdir -p $(LAYERS_DIR)/polars/$(PYTHON_VERSION)/lib/$(PYTHON_VERSION)/site-packages
+	pip install polars==$(POLARS_VERSION) -t $(LAYERS_DIR)/polars/$(PYTHON_VERSION)/lib/$(PYTHON_VERSION)/site-packages
+	cd $(LAYERS_DIR)/polars && zip -r ../polars.zip .
+	rm -rf $(LAYERS_DIR)/polars

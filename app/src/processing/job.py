@@ -96,19 +96,19 @@ def run_job(body_record):
         df_weather_hourly_units = df_weather_hourly_units.to_pandas()
         load.write_s3(
             df=df_weather,
-            bucket=f"{S3_BUCKET}-processed",
+            bucket=S3_BUCKET,
             key="df_weather",
             partition_cols=["state"],
         )
         load.write_s3(
             df=df_weather_hourly,
-            bucket=f"{S3_BUCKET}-processed",
+            bucket=S3_BUCKET,
             key="df_weather_hourly",
             partition_cols=["year", "month", "day", "hour"],
         )
         load.write_s3(
             df=df_weather_hourly_units,
-            bucket=f"{S3_BUCKET}-processed",
+            bucket=S3_BUCKET,
             key="df_weather_hourly_units",
         )
         logger.info(f"Arquivo {path} processado e salvo com sucesso.")
